@@ -1,0 +1,82 @@
+<div class="preview-toolbar">
+  <div class="file-tabs" role="tablist" aria-label="Файлы документа">
+    @for (file of document().files; track file.id) {
+      <button
+        role="tab"
+        [attr.aria-selected]="selectedFile().id === file.id"
+        [class.active]="selectedFile().id === file.id"
+        (click)="fileChanged.emit(file.id)"
+      >
+        {{ file.name }}
+      </button>
+    }
+  </div>
+  <div class="zoom-controls">
+    <button
+      class="icon-button bordered"
+      aria-label="Уменьшить масштаб"
+      [disabled]="zoom() <= 60"
+      (click)="zoom.set(zoom() - 10)"
+    >
+      <app-icon name="minus" /></button
+    ><span>{{ zoom() }}%</span
+    ><button
+      class="icon-button bordered"
+      aria-label="Увеличить масштаб"
+      [disabled]="zoom() >= 160"
+      (click)="zoom.set(zoom() + 10)"
+    >
+      <app-icon name="plus" /></button
+    ><span class="page-count">стр. 1 из 1</span
+    ><button class="icon-button bordered" aria-label="Скачать открытый файл" (click)="download()">
+      <app-icon name="download" />
+    </button>
+  </div>
+</div>
+@if (version() && version() !== document().versions[0].number) {
+  <div class="version-banner">
+    Просмотр версии {{ version() }} от {{ date(selectedVersion().date)
+    }}<button class="text-link" (click)="currentVersion.emit()">Вернуться к текущей</button>
+  </div>
+}
+<div class="preview-canvas">
+  @if (selectedFile().kind === 'PDF') {
+    <iframe
+      class="pdf-frame"
+      [src]="pdfUrl()"
+      title="Предпросмотр PDF"
+      [style.height.px]="(720 * zoom()) / 100"
+    ></iframe>
+  } @else if (selectedFile().kind === 'IMG') {
+    <img
+      class="scan-preview"
+      [src]="selectedFile().dataUrl"
+      [alt]="selectedFile().name"
+      [style.width.%]="zoom()"
+    />
+  } @else {
+    <article class="document-paper" [style.zoom]="zoom() / 100">
+      @if (selectedFile().text; as text) {
+        <div class="attachment-text">{{ text }}</div>
+      } @else {
+        <p class="paper-bank">БАНК</p>
+        <h2>ПРИКАЗ</h2>
+        <div class="paper-meta">
+          <span>{{ date(document().date) }}</span
+          ><span>г. [Город]</span><span>№ {{ document().number }}</span>
+        </div>
+        <h3>{{ selectedVersion().title }}</h3>
+        <p>В целях упорядочения организации работы Банка<br />ПРИКАЗЫВАЮ:</p>
+        @for (paragraph of selectedVersion().paragraphs; track $index) {
+          <p [id]="'paragraph-' + ($index + 1)" [class.highlighted-paragraph]="highlight() === $index + 1">
+            {{ $index + 1 }}. {{ paragraph }}
+          </p>
+        }
+        <div class="paper-signature">
+          <span>{{ document().signer }}</span
+          ><span>________________</span>
+        </div>
+      }
+    </article>
+  }
+</div>

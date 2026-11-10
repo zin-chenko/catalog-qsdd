@@ -1,0 +1,648 @@
+<div class="document-workspace" [class.assistant-hidden]="!assistantVisible()">
+  <main class="document-main panel">
+    <header class="document-heading">
+      <div class="breadcrumb">
+        <span>{{ folder().parent || 'Центр документов' }}</span
+        ><app-icon name="chevron" /><span>{{ folder().name }}</span
+        ><button
+          class="icon-button assistant-toggle"
+          aria-label="Показать или скрыть AI-ассистента"
+          (click)="assistantVisible.set(!assistantVisible())"
+        >
+          <app-icon name="sparkles" />
+        </button>
+      </div>
+      @if (tab() === 'list') {
+        <div class="list-title">
+          <h1>{{ query().get('scope') === 'all' ? 'Результаты поиска' : folder().name }}</h1>
+          <span>· {{ filtered().length }} документов</span>
+        </div>
+        @if (query().get('q')) {
+          <div class="search-caption">По запросу «{{ query().get('q') }}»</div>
+        }
+      } @else if (doc(); as document) {
+        <div class="document-meta">
+          <span>{{ document.type.split(' ')[0] }} № {{ document.number }} от {{ date(document.date) }}</span
+          ><span class="meta-dot">·</span><span>Версия {{ document.versions[0].number }}</span
+          ><app-status [status]="document.status" />
+        </div>
+        <h1 class="document-title">{{ document.title }}</h1>
+      }
+      <nav class="document-tabs" aria-label="Вкладки документа">
+        @for (item of tabs; track item.id) {
+          <button
+            [class.active]="tab() === item.id"
+            [attr.aria-current]="tab() === item.id ? 'page' : null"
+            [disabled]="item.id !== 'list' && !doc()"
+            (click)="navigate(item.id)"
+          >
+            {{ item.label }}
+            @if (item.id === 'versions' && doc()) {
+              <span>({{ doc()!.versions.length }})</span>
+            }
+          </button>
+        }
+      </nav>
+    </header>
+    @if (!store.state()) {
+      <div class="empty-state">
+        <span class="spinner"></span>
+        <h2>Загружаем документы…</h2>
+      </div>
+    } @else if (tab() === 'list') {
+      <div class="list-toolbar">
+        <button class="button primary" (click)="showDialog('create')">
+          <app-icon name="plus" />Создать документ</button
+        ><span class="sort-caption"
+          >Сортировка:
+          {{
+            sortKey() === 'date'
+              ? 'по дате'
+              : columns[
+                  sortKey() === 'title'
+                    ? 2
+                    : sortKey() === 'author'
+                      ? 3
+                      : sortKey() === 'status'
+                        ? 4
+                        : sortKey() === 'deadline'
+                          ? 5
+                          : 0
+                ].label.toLowerCase()
+          }}, {{ sortDirection() === 'desc' ? 'по убыванию' : 'по возрастанию' }}</span
+        >
+      </div>
+      <div class="table-scroll list-table-scroll">
+        <table class="documents-table">
+          <thead>
+            <tr>
+              @for (column of columns; track column.key) {
+                <th
+                  [attr.aria-sort]="
+                    sortKey() === column.key
+                      ? sortDirection() === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  "
+                >
+                  <button (click)="sort(column.key)">
+                    {{ column.label }}
+                    @if (sortKey() === column.key) {
+                      <span class="sort-arrow">{{ sortDirection() === 'desc' ? '↓' : '↑' }}</span>
+                    }
+                  </button>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (document of visible(); track document.id) {
+              <tr
+                [class.selected-row]="doc()?.id === document.id"
+                (click)="selectedId.set(document.id)"
+                (dblclick)="open(document)"
+              >
+                <td [class.muted]="document.number === 'проект'">{{ document.number }}</td>
+                <td class="nowrap">{{ date(document.date) }}</td>
+                <td>
+                  <button class="document-title-link" (click)="open(document); $event.stopPropagation()">
+                    {{ document.title }}
+                  </button>
+                </td>
+                <td>{{ document.author }}</td>
+                <td><app-status [status]="document.status" /></td>
+                <td class="nowrap" [class.overdue]="isOverdue(document)">{{ date(document.deadline) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (!filtered().length) {
+          <div class="empty-state">
+            <app-icon name="search" />
+            <h2>Документы не найдены</h2>
+            <p>Измените запрос или сбросьте фильтры.</p>
+            <button class="button" (click)="router.navigate(['/documents', folder().id])">
+              Показать все документы
+            </button>
+          </div>
+        }
+      </div>
+      <footer class="pagination">
+        <span>{{ first() }}–{{ last() }} из {{ filtered().length }}</span>
+        <div class="pagination-controls">
+          <label
+            >На странице
+            <select
+              aria-label="Документов на странице"
+              [ngModel]="pageSize()"
+              (ngModelChange)="pageSize.set(+$event); page.set(1)"
+            >
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select></label
+          ><span>{{ currentPage() }} / {{ pages() }}</span
+          ><button
+            class="icon-button bordered previous"
+            aria-label="Предыдущая страница"
+            [disabled]="currentPage() === 1"
+            (click)="page.set(currentPage() - 1)"
+          >
+            <app-icon name="chevron" /></button
+          ><button
+            class="icon-button bordered"
+            aria-label="Следующая страница"
+            [disabled]="currentPage() >= pages()"
+            (click)="page.set(currentPage() + 1)"
+          >
+            <app-icon name="chevron" />
+          </button>
+        </div>
+      </footer>
+    } @else if (doc(); as document) {
+      <div class="document-tab-content" [class.preview-content]="tab() === 'preview'">
+        @switch (tab()) {
+          @case ('card') {
+            <section class="document-card">
+              <div class="section-heading">
+                <h2>Атрибуты</h2>
+                @if (canEdit()) {
+                  <button class="button small" (click)="showDialog('edit')">
+                    <app-icon name="edit" />Редактировать
+                  </button>
+                }
+                @if (document.status === 'Зарегистрирован') {
+                  <span class="readonly-label"><app-icon name="shield" />Только чтение</span>
+                }
+              </div>
+              <dl class="attributes-grid">
+                <div>
+                  <dt>Вид документа</dt>
+                  <dd>{{ document.type }}</dd>
+                </div>
+                <div>
+                  <dt>Номер и дата</dt>
+                  <dd>№ {{ document.number }} от {{ date(document.date) }}</dd>
+                </div>
+                <div class="full-width">
+                  <dt>Заголовок</dt>
+                  <dd>{{ document.title }}</dd>
+                </div>
+                <div>
+                  <dt>Автор</dt>
+                  <dd>{{ document.author }}, {{ document.department }}</dd>
+                </div>
+                <div>
+                  <dt>Подписант</dt>
+                  <dd>{{ document.signer }}</dd>
+                </div>
+                <div>
+                  <dt>Юридическое лицо</dt>
+                  <dd>{{ document.legalEntity }}</dd>
+                </div>
+                <div>
+                  <dt>Гриф доступа</dt>
+                  <dd>{{ document.access }}</dd>
+                </div>
+                <div>
+                  <dt>Дело по номенклатуре</dt>
+                  <dd>{{ document.caseNumber }}</dd>
+                </div>
+                <div>
+                  <dt>Срок хранения</dt>
+                  <dd>{{ document.retention }}</dd>
+                </div>
+                <div>
+                  <dt>Связанные документы</dt>
+                  <dd>
+                    @if (related(); as linked) {
+                      <button class="text-link" (click)="open(linked)">
+                        Приказ № {{ linked.number }} от {{ date(linked.date) }}
+                      </button>
+                      (отменяется)
+                    } @else {
+                      —
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Контроль исполнения</dt>
+                  <dd>{{ document.controller }}</dd>
+                </div>
+              </dl>
+              <div class="section-heading files-heading">
+                <h2>Файлы документа ({{ document.files.length }})</h2>
+                @if (canEdit()) {
+                  <button class="button small" (click)="fileInput.click()">
+                    <app-icon name="plus" />Добавить файл
+                  </button>
+                }
+                <input
+                  #fileInput
+                  type="file"
+                  hidden
+                  accept=".docx,.pdf,.png,.jpg,.jpeg,.webp"
+                  (change)="upload($event)"
+                />
+              </div>
+              <div class="files-list">
+                @for (file of document.files; track file.id) {
+                  <div class="file-row">
+                    <span class="file-type" [class.pdf]="file.kind === 'PDF'">{{ file.kind }}</span>
+                    <div class="file-info">
+                      <strong>{{ file.name }}</strong>
+                      @if (file.main) {
+                        <span class="main-file-label">основной</span>
+                      }
+                      <small
+                        >{{ file.size }} ·
+                        {{
+                          file.automatic
+                            ? 'формируется автоматически'
+                            : 'версия ' +
+                              document.versions[0].number +
+                              ' · ' +
+                              date(document.versions[0].date)
+                        }}</small
+                      >
+                    </div>
+                    <button class="button soft small" (click)="previewFile(file.id)">Просмотреть</button
+                    ><button
+                      class="icon-button bordered"
+                      [attr.aria-label]="'Скачать ' + file.name"
+                      (click)="download(file.id)"
+                    >
+                      <app-icon name="download" />
+                    </button>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+          @case ('preview') {
+            <app-document-preview
+              [document]="document"
+              [fileId]="fileId()"
+              [version]="previewVersion()"
+              [highlight]="highlightedParagraph()"
+              (fileChanged)="fileId.set($event)"
+              (currentVersion)="previewVersion.set(null)"
+            />
+          }
+          @case ('route') {
+            <section class="route-content">
+              <div class="route-toolbar">
+                <p>
+                  Шаблон: <strong>ОРД — приказ</strong> · последовательно-параллельный ·
+                  {{
+                    currentStage()
+                      ? 'этап ' +
+                        (document.route.indexOf(currentStage()!) + 1) +
+                        ' из ' +
+                        document.route.length
+                      : 'завершён'
+                  }}
+                </p>
+                <div>
+                  <button
+                    class="button small"
+                    [disabled]="!canChangeRoute()"
+                    title="Доступно инициатору и администратору активного процесса"
+                    (click)="showDialog('participant')"
+                  >
+                    <app-icon name="plus" />Участник</button
+                  ><button
+                    class="button small"
+                    [disabled]="!canChangeRoute()"
+                    title="Доступно инициатору и администратору активного процесса"
+                    (click)="showDialog('extra')"
+                  >
+                    Доп. согласование
+                  </button>
+                </div>
+              </div>
+              <ol class="timeline">
+                @for (step of document.route; track step.id) {
+                  <li [class]="'timeline-step ' + step.state">
+                    <span class="step-marker">
+                      @if (step.state === 'done') {
+                        <app-icon name="check" />
+                      } @else {
+                        {{ $index + 1 }}
+                      }
+                    </span>
+                    <div class="step-content">
+                      <h3>
+                        {{ $index + 1 }}. {{ step.title }}
+                        @if (step.state === 'current') {
+                          <span> — текущий этап</span>
+                        }
+                        @if (step.parallel) {
+                          <small> · параллельно</small>
+                        }
+                      </h3>
+                      @for (participant of step.participants; track $index) {
+                        <div class="participant" [class.participant-card]="step.parallel">
+                          <div class="participant-line">
+                            <span>{{ participant.name }}</span
+                            ><span class="decision-text"
+                              >{{ participant.decision }}
+                              @if (participant.date) {
+                                · {{ participant.date }}
+                              }
+                            </span>
+                          </div>
+                          @if (participant.comment) {
+                            <p class="participant-comment">«{{ participant.comment }}»</p>
+                          }
+                        </div>
+                      }
+                      @if (step.state === 'current' && document.deadline) {
+                        <p class="stage-deadline">Срок {{ date(document.deadline) }}</p>
+                      }
+                    </div>
+                  </li>
+                }
+              </ol>
+            </section>
+          }
+          @case ('versions') {
+            <section class="versions-content">
+              <div class="versions-toolbar">
+                <p>Отметьте две версии, чтобы сравнить их с подсветкой изменений</p>
+                <button
+                  class="button outline-primary"
+                  [disabled]="comparedVersions().length !== 2"
+                  (click)="showDialog('compare')"
+                >
+                  Сравнить выбранные ({{ comparedVersions().length }})
+                </button>
+              </div>
+              <div class="table-scroll">
+                <table class="versions-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Версия</th>
+                      <th>Дата и время</th>
+                      <th>Автор изменений</th>
+                      <th>Этап</th>
+                      <th>Что изменено</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (version of document.versions; track version.number) {
+                      <tr [class.version-selected]="selectedVersions().includes(version.number)">
+                        <td>
+                          <input
+                            type="checkbox"
+                            [attr.aria-label]="'Выбрать версию ' + version.number"
+                            [checked]="selectedVersions().includes(version.number)"
+                            (change)="selectVersion(version.number)"
+                          />
+                        </td>
+                        <td>
+                          <strong>{{ version.number }}</strong>
+                          @if ($first) {
+                            <span class="current-version">текущая</span>
+                          }
+                        </td>
+                        <td>{{ date(version.date) }}<br />{{ version.date.slice(11, 16) }}</td>
+                        <td>{{ version.author }}</td>
+                        <td>{{ version.stage }}</td>
+                        <td>{{ version.description }}</td>
+                        <td>
+                          <button class="text-link" (click)="openVersion(version.number)">Открыть</button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="versions-note">
+                Версия создаётся автоматически при каждом сохранении правок. Зарегистрированная версия закрыта
+                для редактирования.
+              </p>
+            </section>
+          }
+        }
+      </div>
+      <footer class="decision-panel">
+        @if (canDecide()) {
+          <div class="decision-top">
+            <p>
+              Ваш этап: <strong>{{ currentStage()?.title || 'Согласование' }}</strong> · срок
+              {{ date(document.deadline) }}
+            </p>
+            <input
+              aria-label="Комментарий к решению"
+              placeholder="Комментарий к решению"
+              [(ngModel)]="comment"
+            />
+          </div>
+          <div class="decision-buttons">
+            <button class="button" [disabled]="store.busy()" (click)="showDialog('delegate')">
+              Делегировать</button
+            ><button class="button danger" [disabled]="store.busy()" (click)="showDialog('reject')">
+              Отклонить</button
+            ><button class="button primary" [disabled]="store.busy()" (click)="approve()">Согласовать</button>
+          </div>
+        } @else if (document.status === 'Черновик' && canEdit()) {
+          <p>Документ готовится к согласованию</p>
+          <button class="button primary" [disabled]="store.busy()" (click)="submit()">
+            Отправить на согласование
+          </button>
+        } @else {
+          <div class="decision-complete">
+            <app-icon [name]="document.status === 'Отклонён' ? 'bell' : 'check'" /><span>{{
+              document.status === 'На согласовании'
+                ? 'Документ ожидает решения: ' + document.assignee
+                : 'Статус документа: ' + document.status
+            }}</span
+            ><button class="button small" (click)="showDialog('task')">Создать поручение</button>
+          </div>
+        }
+      </footer>
+    } @else {
+      <div class="empty-state">
+        <app-icon name="file" />
+        <h2>Документ не найден</h2>
+        <p>Выберите документ в списке, чтобы открыть его карточку.</p>
+        <button class="button primary" (click)="navigate('list')">К списку документов</button>
+      </div>
+    }
+  </main>
+  @if (assistantVisible()) {
+    <app-assistant
+      [context]="context()"
+      [label]="contextLabel()"
+      (openReference)="openReference($event)"
+      (createTask)="showDialog('task')"
+    />
+  }
+</div>
+
+@if (dialog(); as activeDialog) {
+  <app-dialog
+    [title]="
+      activeDialog === 'create'
+        ? 'Создать документ'
+        : activeDialog === 'edit'
+          ? 'Редактировать документ'
+          : activeDialog === 'delegate'
+            ? 'Делегировать согласование'
+            : activeDialog === 'reject'
+              ? 'Отклонить документ'
+              : activeDialog === 'participant'
+                ? 'Добавить участника'
+                : activeDialog === 'extra'
+                  ? 'Дополнительное согласование'
+                  : activeDialog === 'task'
+                    ? 'Создать поручение'
+                    : 'Сравнение версий'
+    "
+    (closed)="dialog.set(null)"
+  >
+    @if (activeDialog === 'compare') {
+      <div class="comparison-body">
+        <p class="comparison-legend">
+          <span class="removed-swatch"></span>Удалено <span class="added-swatch"></span>Добавлено
+        </p>
+        <div class="comparison-grid">
+          @for (version of comparedVersions(); track version.number; let side = $index) {
+            <section>
+              <h3>
+                Версия {{ version.number }}<small>{{ date(version.date) }} · {{ version.author }}</small>
+              </h3>
+              <h4
+                [class.diff-removed]="side === 0 && version.title !== comparedVersions()[1].title"
+                [class.diff-added]="side === 1 && version.title !== comparedVersions()[0].title"
+              >
+                {{ version.title }}
+              </h4>
+              @for (paragraph of version.paragraphs; track $index) {
+                <p
+                  [class.diff-removed]="side === 0 && paragraph !== comparedVersions()[1].paragraphs[$index]"
+                  [class.diff-added]="side === 1 && paragraph !== comparedVersions()[0].paragraphs[$index]"
+                >
+                  {{ $index + 1 }}. {{ paragraph }}
+                </p>
+              }
+            </section>
+          }
+        </div>
+        <div class="dialog-actions"><button class="button" (click)="dialog.set(null)">Закрыть</button></div>
+      </div>
+    } @else {
+      <form class="dialog-body" (ngSubmit)="saveDialog()" #editor="ngForm">
+        @if (activeDialog === 'create' || activeDialog === 'edit' || activeDialog === 'task') {
+          <label
+            >{{ activeDialog === 'task' ? 'Содержание поручения' : 'Заголовок документа'
+            }}<textarea
+              name="title"
+              [(ngModel)]="formTitle"
+              required
+              maxlength="500"
+              rows="3"
+              placeholder="Введите заголовок"
+            ></textarea>
+          </label>
+        }
+        @if (activeDialog === 'create') {
+          <label
+            >Вид документа<select name="type" [(ngModel)]="formType">
+              <option>Приказ по основной деятельности</option>
+              <option>Распоряжение</option>
+              <option>Служебная записка</option>
+              <option>Входящее письмо</option>
+              <option>Исходящее письмо</option>
+              <option>Протокол заседания</option>
+            </select></label
+          >
+          <div class="form-info">
+            <app-icon name="folder" />Документ будет создан в папке «{{
+              folder().id === 'center' ? 'Приказы' : folder().name
+            }}» в статусе «Черновик».
+          </div>
+        }
+        @if (activeDialog === 'edit') {
+          <label
+            >Текст документа<textarea name="text" [(ngModel)]="formText" required rows="9"></textarea
+            ><small>Каждый абзац станет отдельным пунктом.</small></label
+          ><label
+            >Описание изменений<input
+              name="changes"
+              [(ngModel)]="formComment"
+              placeholder="Что изменилось в этой версии"
+          /></label>
+        }
+        @if (['delegate', 'participant', 'extra', 'task'].includes(activeDialog)) {
+          <label
+            >{{ activeDialog === 'task' ? 'Исполнитель' : 'Сотрудник'
+            }}<select name="person" [(ngModel)]="formPerson" required>
+              @for (person of people; track person) {
+                @if (activeDialog !== 'delegate' || person !== doc()?.assignee) {
+                  <option>{{ person }}</option>
+                }
+              }
+            </select></label
+          >
+        }
+        @if (activeDialog === 'delegate' || activeDialog === 'reject') {
+          <label
+            >{{ activeDialog === 'reject' ? 'Причина отклонения' : 'Комментарий'
+            }}<textarea
+              name="comment"
+              [(ngModel)]="comment"
+              [required]="activeDialog === 'reject'"
+              rows="3"
+              placeholder="Добавьте комментарий"
+            ></textarea>
+          </label>
+        }
+        @if (activeDialog === 'task') {
+          <label
+            >Срок исполнения<input type="date" name="deadline" [(ngModel)]="formDeadline" required
+          /></label>
+          <p class="muted">Поручение будет связано с документом № {{ doc()?.number }}.</p>
+        }
+        @if (activeDialog === 'participant' || activeDialog === 'extra') {
+          <p class="form-info">
+            {{
+              activeDialog === 'extra'
+                ? 'Новый этап будет добавлен после текущего этапа согласования.'
+                : 'Сотрудник будет добавлен в текущий этап параллельного согласования.'
+            }}
+          </p>
+        }
+        <div class="dialog-actions">
+          <button type="button" class="button" (click)="dialog.set(null)">Отмена</button
+          ><button
+            class="button"
+            [class.primary]="activeDialog !== 'reject'"
+            [class.danger]="activeDialog === 'reject'"
+            [disabled]="
+              editor.invalid ||
+              store.busy() ||
+              ((activeDialog === 'create' || activeDialog === 'edit' || activeDialog === 'task') &&
+                !formTitle.trim()) ||
+              (activeDialog === 'reject' && !comment.trim())
+            "
+          >
+            {{
+              activeDialog === 'reject'
+                ? 'Отклонить документ'
+                : activeDialog === 'delegate'
+                  ? 'Делегировать'
+                  : activeDialog === 'create' || activeDialog === 'task'
+                    ? 'Создать'
+                    : 'Сохранить'
+            }}
+          </button>
+        </div>
+      </form>
+    }
+  </app-dialog>
+}

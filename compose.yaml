@@ -1,0 +1,9 @@
+services:
+  catalog-qsdd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: catalog-qsdd:local
+    ports:
+      - '127.0.0.1:${PORT:-8080}:80'
+    restart: unless-stopped

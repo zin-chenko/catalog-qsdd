@@ -1,0 +1,73 @@
+<section class="assistant panel" aria-label="AI-ассистент">
+  <header class="assistant-header">
+    <div class="assistant-title">
+      <app-icon name="sparkles" />
+      <h2>AI-ассистент</h2>
+      <span class="demo-label" title="Ответы формируются локально по демоданным">Демо</span>
+    </div>
+    <button class="icon-button" aria-label="Новый диалог" title="Новый диалог" (click)="reset()">
+      <app-icon name="plus" />
+    </button>
+  </header>
+  <div class="assistant-context">
+    <app-icon name="file" /><span>Контекст: {{ label() }}</span>
+  </div>
+  <div class="chat-messages" aria-live="polite" aria-relevant="additions">
+    @for (message of messages(); track message.id) {
+      <div
+        class="chat-message"
+        [class.user-message]="message.role === 'user'"
+        [class.assistant-message]="message.role === 'assistant'"
+      >
+        <div class="message-text">{{ message.text }}</div>
+        @if (message.references?.length) {
+          <div class="message-references">
+            @for (ref of message.references; track $index) {
+              <button class="text-link" (click)="openReference.emit(ref)">{{ ref.label }}</button>
+            }
+          </div>
+        }
+        @if (message.canCreateTask) {
+          <button class="button small" (click)="createTask.emit()">Создать поручение</button>
+        }
+      </div>
+    }
+    @if (!messages().length) {
+      <div class="chat-empty">
+        <app-icon name="sparkles" />
+        <h3>Помогу с документами</h3>
+        <p>Выберите быстрый вопрос или напишите свой.</p>
+      </div>
+    }
+    @if (pending()) {
+      <div class="chat-message assistant-message">Готовлю ответ…</div>
+    }
+  </div>
+  <footer class="assistant-footer">
+    <div class="quick-actions">
+      @for (action of quickActions(); track action) {
+        <button [disabled]="pending()" (click)="send(action)">{{ action }}</button>
+      }
+    </div>
+    <form class="chat-composer" (ngSubmit)="send()">
+      <textarea
+        name="question"
+        aria-label="Вопрос AI-ассистенту"
+        [(ngModel)]="question"
+        (keydown.enter)="onEnter($event)"
+        [placeholder]="
+          context().documentId ? 'Задайте вопрос по документу…' : 'Спросите о документах в папке…'
+        "
+        rows="2"
+      ></textarea>
+      <button
+        class="button primary send-button"
+        aria-label="Отправить вопрос"
+        [disabled]="!question.trim() || pending()"
+      >
+        <app-icon name="send" />
+      </button>
+    </form>
+    <p class="assistant-disclaimer">Ответы ИИ могут содержать ошибки — сверяйтесь с документами.</p>
+  </footer>
+</section>

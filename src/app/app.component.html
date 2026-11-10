@@ -1,0 +1,220 @@
+<header class="topbar">
+  <button
+    class="icon-button mobile-menu"
+    aria-label="Открыть каталог"
+    (click)="sidebarOpen.set(!sidebarOpen())"
+  >
+    <app-icon name="menu" />
+  </button>
+  <a class="brand" routerLink="/documents/orders"
+    ><span class="brand-symbol">Q</span><span>Digital Q.EDMS</span></a
+  >
+  <nav class="top-nav" aria-label="Главное меню">
+    <a routerLink="/documents/orders" [class.active]="!isTasks() && !isReports()">Документы</a>
+    <a routerLink="/tasks" [class.active]="isTasks()">Поручения</a>
+    <a routerLink="/reports" [class.active]="isReports()">Отчёты</a>
+  </nav>
+  <form class="global-search input-icon" (ngSubmit)="searchAll()">
+    <app-icon name="search" /><input
+      name="globalQuery"
+      aria-label="Поиск по всем документам"
+      placeholder="Поиск по всем документам: номер, название, текст…"
+      [(ngModel)]="globalQuery"
+    /><kbd>Enter</kbd>
+  </form>
+  <div class="topbar-actions">
+    <div class="notification-wrapper">
+      <button
+        class="icon-button notification-button"
+        aria-label="Уведомления"
+        (click)="notificationsOpen.set(!notificationsOpen())"
+      >
+        <app-icon name="bell" />
+        @if (unread()) {
+          <span class="notification-count">{{ unread() }}</span>
+        }
+      </button>
+      @if (notificationsOpen()) {
+        <section class="notifications-popover panel">
+          <div class="popover-heading">
+            <h3>Уведомления</h3>
+            <button class="text-link" (click)="store.run(store.api.readNotifications.bind(store.api))">
+              Прочитать все
+            </button>
+          </div>
+          @for (notification of notifications(); track notification.id) {
+            <button
+              class="notification-item"
+              [class.unread]="!notification.read"
+              (click)="openNotification(notification.documentId)"
+            >
+              <app-icon name="bell" /><span
+                ><strong>{{ notification.title }}</strong
+                ><small>{{ notification.detail }}</small></span
+              >
+            </button>
+          }
+        </section>
+      }
+    </div>
+    <button class="profile-button" (click)="showProfile()">
+      <span class="avatar">{{ store.user().initials }}</span
+      ><span>Смирнова Е.</span><app-icon name="down" />
+    </button>
+  </div>
+</header>
+<div class="app-body">
+  @if (sidebarOpen()) {
+    <button class="sidebar-backdrop" aria-label="Закрыть каталог" (click)="sidebarOpen.set(false)"></button>
+  }
+  <aside class="sidebar panel" [class.mobile-open]="sidebarOpen()" aria-label="Каталог документов">
+    <div class="catalog-controls">
+      <div class="catalog-label">КАТАЛОГ <span class="subtle-dot"></span></div>
+      <div class="folder-search-row">
+        <label class="input-icon folder-search"
+          ><app-icon name="search" /><input
+            aria-label="Поиск в текущей папке"
+            [placeholder]="'Поиск в папке «' + folder().name + '»'"
+            [(ngModel)]="folderQuery"
+            (ngModelChange)="applyFilters()" /></label
+        ><button
+          class="icon-button bordered"
+          [class.active]="filtersOpen()"
+          aria-label="Фильтры"
+          (click)="filtersOpen.set(!filtersOpen())"
+        >
+          <app-icon name="filter" />
+        </button>
+      </div>
+      <div class="filter-chips">
+        <button class="chip" (click)="filtersOpen.set(!filtersOpen())">Статус: {{ status || 'все' }}</button>
+        @if (year) {
+          <button class="chip" (click)="year = ''; applyFilters()">{{ year }} год <span>×</span></button>
+        }
+        @if (author || type || from || to || tag || department) {
+          <button class="chip" (click)="filtersOpen.set(true)">Ещё фильтры</button>
+        }
+      </div>
+      @if (filtersOpen()) {
+        <form class="filter-form" (ngSubmit)="applyFilters(); filtersOpen.set(false)">
+          <label
+            >Статус<select name="status" [(ngModel)]="status">
+              <option value="">Все статусы</option>
+              @for (value of statuses; track value) {
+                <option>{{ value }}</option>
+              }
+            </select></label
+          >
+          <div class="form-row">
+            <label
+              >Год<select name="year" [(ngModel)]="year">
+                <option value="">Все годы</option>
+                <option>2026</option>
+                <option>2025</option>
+                <option>2024</option>
+              </select></label
+            ><label
+              >Автор<select name="author" [(ngModel)]="author">
+                <option value="">Все</option>
+                @for (person of people; track person) {
+                  <option>{{ person }}</option>
+                }
+              </select></label
+            >
+          </div>
+          <label
+            >Вид документа<select name="type" [(ngModel)]="type">
+              <option value="">Все виды</option>
+              @for (item of types(); track item) {
+                <option>{{ item }}</option>
+              }
+            </select></label
+          >
+          <label
+            >Подразделение<input
+              name="department"
+              [(ngModel)]="department"
+              placeholder="Например, персонала" /></label
+          ><label>Тег<input name="tag" [(ngModel)]="tag" placeholder="Например, ОРД" /></label>
+          <label>Дата с<input type="date" name="from" [(ngModel)]="from" /></label
+          ><label>Дата по<input type="date" name="to" [(ngModel)]="to" [min]="from" /></label>
+          <button class="button primary" type="submit">Применить</button
+          ><button class="text-link" type="button" (click)="resetFilters()">Сбросить фильтры</button>
+        </form>
+      }
+    </div>
+    <nav class="folder-tree" aria-label="Папки">
+      @for (item of folders; track item.id) {
+        @if (item.id === 'orders') {
+          <div class="folder-group">
+            <app-icon name="folder" /><strong>Организационно-<br />распорядительные</strong>
+          </div>
+        }
+        <button
+          class="folder-item"
+          [class.child-folder]="!!item.parent"
+          [class.selected]="
+            (item.id === folder().id && !isTasks() && !isReports()) || (item.id === 'tasks' && isTasks())
+          "
+          (click)="openFolder(item.id)"
+        >
+          @if (!item.parent) {
+            <app-icon [name]="item.icon" />
+          }
+          <span>{{ item.name }}</span>
+          @if (['center', 'incoming', 'orders', 'directives', 'memos', 'tasks'].includes(item.id)) {
+            <span class="folder-count" [class.warm]="item.id === 'tasks'">{{ count(item.id) }}</span>
+          }
+        </button>
+      }
+    </nav>
+    <div class="sidebar-footer">
+      <app-icon name="shield" />
+      <div><strong>Рабочее пространство</strong><span>Банк · Головной офис</span></div>
+    </div>
+  </aside>
+  <div class="router-content"><router-outlet /></div>
+</div>
+@if (store.toast(); as toast) {
+  <div class="toast" [class.error]="toast.error" role="status">
+    <app-icon [name]="toast.error ? 'bell' : 'check'" /><span>{{ toast.text }}</span
+    ><button class="icon-button" aria-label="Закрыть уведомление" (click)="store.toast.set(null)">
+      <app-icon name="close" />
+    </button>
+  </div>
+}
+@if (profileOpen()) {
+  <app-dialog title="Профиль и замещение" (closed)="profileOpen.set(false)"
+    ><form class="dialog-body" (ngSubmit)="saveProfile()">
+      <div class="profile-summary">
+        <span class="avatar large">ЕС</span>
+        <div>
+          <h3>Смирнова Елена Александровна</h3>
+          <p>Департамент персонала</p>
+        </div>
+      </div>
+      <label
+        >Роль в демоверсии<select name="role" [(ngModel)]="profileRole">
+          <option value="reviewer">Согласующий</option>
+          <option value="admin">Администратор</option>
+        </select></label
+      >
+      <p class="muted">Администратору доступно изменение участников активного маршрута.</p>
+      <label
+        >Замещающий сотрудник<select name="substitute" [(ngModel)]="substitute">
+          <option value="">Не назначен</option>
+          @for (person of people; track person) {
+            @if (person !== store.user().name) {
+              <option>{{ person }}</option>
+            }
+          }
+        </select></label
+      >
+      <p class="muted">В демоверсии назначение сохраняется в профиле. Передачу полномочий выполнит бэкенд.</p>
+      <div class="dialog-actions">
+        <button type="button" class="button" (click)="profileOpen.set(false)">Отмена</button
+        ><button class="button primary" [disabled]="store.busy()">Сохранить</button>
+      </div>
+    </form></app-dialog
+  >
+}
