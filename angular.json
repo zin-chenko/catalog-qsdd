@@ -10,13 +10,18 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular/build:application",
+          "builder": "ngx-build-plus:browser",
           "options": {
             "outputPath": "dist/catalog-qsdd",
             "index": "src/index.html",
-            "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "assets": [{ "glob": "**/*", "input": "public" }],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public",
+                "output": "/"
+              }
+            ],
             "styles": ["src/styles.css"],
             "allowedCommonJsDependencies": [
               "mammoth",
@@ -27,27 +32,58 @@
               "xmlbuilder",
               "@xmldom/xmldom",
               "@xmldom/xmldom/lib/dom"
-            ]
+            ],
+            "main": "src/main.ts",
+            "polyfills": ["zone.js"],
+            "extraWebpackConfig": "webpack.config.js",
+            "singleBundle": true,
+            "keepStyles": true,
+            "bundleStyles": true
           },
           "configurations": {
             "production": {
-              "budgets": [{ "type": "initial", "maximumWarning": "700kB", "maximumError": "1MB" }],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "700kB",
+                  "maximumError": "1MB"
+                }
+              ],
               "outputHashing": "all"
             },
-            "development": { "optimization": false, "extractLicenses": false, "sourceMap": true }
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "buildOptimizer": false,
+              "vendorChunk": true,
+              "namedChunks": true
+            }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
+          "builder": "ngx-build-plus:dev-server",
           "configurations": {
-            "production": { "buildTarget": "catalog-qsdd:build:production" },
-            "development": { "buildTarget": "catalog-qsdd:build:development" }
+            "production": {
+              "buildTarget": "catalog-qsdd:build:production"
+            },
+            "development": {
+              "buildTarget": "catalog-qsdd:build:development"
+            }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "extraWebpackConfig": "webpack.config.js",
+            "singleBundle": true,
+            "keepStyles": true,
+            "bundleStyles": true
+          }
         }
       }
     }
   },
-  "cli": { "analytics": false }
+  "cli": {
+    "analytics": false
+  }
 }

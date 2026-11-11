@@ -1,3 +1,4 @@
+import { provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { AppComponent } from './app/app.component';
@@ -6,6 +7,7 @@ import { EdmsRepository, MockEdmsRepository } from './app/core/edms.repository';
 
 bootstrapApplication(AppComponent, {
   providers: [
+    provideZoneChangeDetection(),
     provideRouter(routes, withComponentInputBinding()),
     { provide: EdmsRepository, useClass: MockEdmsRepository },
   ],

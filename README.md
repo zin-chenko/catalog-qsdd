@@ -2,22 +2,26 @@
 
 Angular-приложение Q.EDMS по макетам `Q.EDMS_макеты_с_комментариями.pdf`. Интерфейс на русском языке. Все данные, решения по документам, уведомления и ответы ассистента работают локально; сервер и внешние AI-сервисы не нужны.
 
+## Ветка совместимости с qedmsui
+
+В этой ветке установка выполняется pnpm 11.25.0 через корпоративный Nexus, указанный в `.npmrc`. Нужен доступ к сети Diasoft. Angular и сборочные зависимости согласованы с локальным `qedmsui/QEDMSUI`; подробности и границы переноса — [docs/qedmsui-compatibility.md](docs/qedmsui-compatibility.md).
+
 ## Запуск
 
 Требуется Node.js 20.19+, 22.12+ или 24.x, совместимый с Angular 21.
 
 ```sh
-npm ci
-npm start
+pnpm install --frozen-lockfile
+pnpm start
 ```
 
 Открыть http://localhost:4200. Стартовый экран — папка «Приказы».
 
 ```sh
-npm run build          # production-сборка в dist/catalog-qsdd/browser
-npm test               # сценарии Playwright
+pnpm run build          # production-сборка в dist/catalog-qsdd
+pnpm test               # сценарии Playwright
 npm run test:repository # проверка хранения и создания папок без браузера
-npm run format:check   # проверка форматирования
+pnpm run format:check   # проверка форматирования
 ```
 
 В Windows тесты используют установленный Google Chrome. На других системах предварительно выполнить `npx playwright install chromium`. Браузер можно переопределить переменной `PLAYWRIGHT_CHANNEL`. Тесты самостоятельно запускают Angular dev server и используют отдельное хранилище для каждого сценария.

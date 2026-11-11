@@ -1,0 +1,10 @@
+minimumReleaseAge: 0
+overrides:
+  '@rspack/core': 1.7.12
+  '@module-federation/enhanced': 2.8.2
+  '@module-federation/runtime-core': 2.8.2
+allowBuilds:
+  esbuild: true
+  '@parcel/watcher': true
+  lmdb: true
+  msgpackr-extract: true
