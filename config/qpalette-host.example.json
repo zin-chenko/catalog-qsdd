@@ -1,0 +1,12 @@
+{
+  "auth": {
+    "service": "default",
+    "options": {
+      "logLevel": "disable",
+      "enableTokenRefresh": true,
+      "authDataServiceConfig": { "urls": { "base": "/api" } },
+      "excludeUrlsFromAuthorization": ["assets/*"]
+    }
+  },
+  "apiBaseUrl": "/api/$service"
+}

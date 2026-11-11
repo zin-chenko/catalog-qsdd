@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": { "outDir": "./out-tsc/qpalette" },
+  "files": ["src/qpalette/main.ts"]
+}

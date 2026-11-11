@@ -12,7 +12,10 @@
     "format:check": "prettier --check .",
     "test:repository": "playwright test --config playwright.repository.config.ts",
     "ng": "ng",
-    "prod": "pnpm run build"
+    "prod": "pnpm run build",
+    "setup:qpalette": "node scripts/install-qpalette.mjs",
+    "build:qpalette": "ng build catalog-qsdd --configuration production,qpalette --optimization true",
+    "start:qpalette": "ng serve catalog-qsdd --configuration qpalette --port=4201 --live-reload=false"
   },
   "dependencies": {
     "@angular-architects/module-federation": "21.2.2",

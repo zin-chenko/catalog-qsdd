@@ -58,6 +58,12 @@
               "buildOptimizer": false,
               "vendorChunk": true,
               "namedChunks": true
+            },
+            "qpalette": {
+              "main": "src/qpalette/main.ts",
+              "tsConfig": "tsconfig.qpalette.json",
+              "outputPath": "dist/catalog-qsdd-qpalette",
+              "outputHashing": "none"
             }
           },
           "defaultConfiguration": "production"
@@ -70,6 +76,9 @@
             },
             "development": {
               "buildTarget": "catalog-qsdd:build:development"
+            },
+            "qpalette": {
+              "buildTarget": "catalog-qsdd:build:development,qpalette"
             }
           },
           "defaultConfiguration": "development",

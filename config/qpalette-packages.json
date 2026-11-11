@@ -1,0 +1,11 @@
+{
+  "@diasoft/qpalette-auth": "8.1.3",
+  "@diasoft/qpalette-core": "8.1.3",
+  "@diasoft/qpalette-urls": "8.1.3",
+  "@diasoft/qpalette-visual": "8.1.3",
+  "@angular/animations": "21.2.19",
+  "@angular/cdk": "21.2.14",
+  "@angular/elements": "21.2.19",
+  "@jsverse/transloco": "8.3.0",
+  "primeng": "21.1.5"
+}
