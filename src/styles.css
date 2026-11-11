@@ -219,6 +219,8 @@ small {
 }
 .input-icon > app-icon {
   position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   left: 11px;
   width: 15px;
   height: 15px;
