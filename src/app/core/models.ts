@@ -85,7 +85,21 @@ export interface User {
   role: 'reviewer' | 'admin';
   substitute: string;
 }
+export type WorkflowStepType = 'approval' | 'signing';
+export interface WorkflowStep {
+  id: string;
+  name: string;
+  assignee: string;
+  type: WorkflowStepType;
+}
+export interface WorkflowRoute {
+  id: string;
+  name: string;
+  steps: WorkflowStep[];
+}
+export type WorkflowRouteInput = Omit<WorkflowRoute, 'id'>;
 export interface Snapshot {
+  workflowRoutes: WorkflowRoute[];
   folders: Folder[];
   documents: EdmsDocument[];
   tasks: Task[];

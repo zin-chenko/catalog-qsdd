@@ -10,8 +10,9 @@
     ><span class="brand-symbol">Q</span><span>Digital Q.EDMS</span></a
   >
   <nav class="top-nav" aria-label="Главное меню">
-    <a routerLink="/documents/orders" [class.active]="!isTasks() && !isReports()">Документы</a>
+    <a routerLink="/documents/orders" [class.active]="!isTasks() && !isReports() && !isRoutes()">Документы</a>
     <a routerLink="/tasks" [class.active]="isTasks()">Поручения</a>
+    <a routerLink="/routes" [class.active]="isRoutes()">Маршруты</a>
     <a routerLink="/reports" [class.active]="isReports()">Отчёты</a>
   </nav>
   <form class="global-search input-icon" (ngSubmit)="searchAll()">
@@ -161,7 +162,8 @@
             class="folder-item"
             [title]="row.path"
             [class.selected]="
-              (item.id === folder().id && !isTasks() && !isReports()) || (item.id === 'tasks' && isTasks())
+              (item.id === folder().id && !isTasks() && !isReports() && !isRoutes()) ||
+              (item.id === 'tasks' && isTasks())
             "
             (click)="openFolder(item.id)"
           >

@@ -2273,8 +2273,12 @@ label small {
   .top-nav {
     margin-left: auto;
     gap: 0;
+    min-width: 0;
+    overflow-x: auto;
   }
   .top-nav a {
+    flex: none;
+    white-space: nowrap;
     font-size: 10px;
     padding: 9px 7px;
   }

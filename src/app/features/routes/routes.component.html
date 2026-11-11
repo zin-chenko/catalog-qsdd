@@ -1,0 +1,179 @@
+<main class="module-page panel">
+  <header class="module-heading">
+    <p class="eyebrow">НАСТРОЙКА ДОКУМЕНТООБОРОТА</p>
+    <div class="section-heading routes-heading">
+      <h1>
+        Маршруты <span class="heading-count">{{ store.workflowRoutes().length }}</span>
+      </h1>
+      <button class="button primary" (click)="openEditor()" [disabled]="!store.state() || store.busy()">
+        <app-icon name="plus" />Создать маршрут
+      </button>
+    </div>
+    <p class="muted">Последовательность согласования и подписания с ответственным за каждый шаг</p>
+  </header>
+  <div class="module-toolbar">
+    <label class="input-icon route-search"
+      ><app-icon name="search" /><input
+        aria-label="Поиск маршрутов"
+        placeholder="Название, шаг или исполнитель"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+    /></label>
+    <span class="muted">Найдено: {{ routes().length }}</span>
+  </div>
+  <div class="routes-list">
+    @for (route of routes(); track route.id) {
+      <article class="route-card">
+        <div class="route-card-header">
+          <div>
+            <h2>{{ route.name }}</h2>
+            <p class="muted">Шагов: {{ route.steps.length }} · Последовательно</p>
+          </div>
+          <div class="route-actions">
+            <button
+              class="button"
+              [attr.aria-label]="'Дублировать маршрут «' + route.name + '»'"
+              [disabled]="store.busy()"
+              (click)="duplicate(route)"
+            >
+              Дублировать
+            </button>
+            <button
+              class="button"
+              [attr.aria-label]="'Редактировать маршрут «' + route.name + '»'"
+              [disabled]="store.busy()"
+              (click)="openEditor(route)"
+            >
+              Редактировать
+            </button>
+          </div>
+        </div>
+        <ol class="route-summary">
+          @for (step of route.steps; track step.id) {
+            <li>
+              <strong>{{ step.name }}</strong
+              ><span>{{ step.assignee }}</span
+              ><span
+                class="status"
+                [class.blue]="step.type === 'approval'"
+                [class.green]="step.type === 'signing'"
+                >{{ stepTypes[step.type] }}</span
+              >
+            </li>
+          }
+        </ol>
+      </article>
+    } @empty {
+      <div class="empty-state">
+        <app-icon name="check-square" />
+        <h2>{{ search() ? 'Маршруты не найдены' : 'Маршрутов пока нет' }}</h2>
+        <p>
+          {{
+            search()
+              ? 'Измените запрос или сбросьте поиск.'
+              : 'Создайте маршрут и добавьте шаги согласования и подписания.'
+          }}
+        </p>
+        @if (search()) {
+          <button class="button" (click)="search.set('')">Сбросить поиск</button>
+        }
+      </div>
+    }
+  </div>
+</main>
+@if (editorOpen()) {
+  <app-dialog [title]="editingId ? 'Редактирование маршрута' : 'Новый маршрут'" (closed)="closeEditor()">
+    <form class="dialog-body" (ngSubmit)="save()">
+      <fieldset class="route-fields" [disabled]="store.busy()">
+        <label
+          >Название маршрута<input
+            name="routeName"
+            [(ngModel)]="routeName"
+            required
+            maxlength="100"
+            placeholder="Например, Согласование договора"
+        /></label>
+        <div class="section-heading">
+          <h3>Шаги маршрута</h3>
+          <span class="muted">Выполняются сверху вниз</span>
+        </div>
+        <datalist id="route-people">
+          @for (person of people; track person) {
+            <option [value]="person"></option>
+          }
+        </datalist>
+        @for (step of steps; track step.id; let i = $index) {
+          <section class="step-editor" [attr.aria-label]="'Шаг ' + (i + 1)">
+            <div class="section-heading">
+              <h4>Шаг {{ i + 1 }}</h4>
+              <div class="route-actions">
+                <button
+                  type="button"
+                  class="icon-button bordered"
+                  [attr.aria-label]="'Поднять шаг ' + (i + 1)"
+                  [disabled]="i === 0"
+                  (click)="moveStep(i, -1)"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  class="icon-button bordered"
+                  [attr.aria-label]="'Опустить шаг ' + (i + 1)"
+                  [disabled]="i === steps.length - 1"
+                  (click)="moveStep(i, 1)"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  class="icon-button"
+                  [attr.aria-label]="'Удалить шаг ' + (i + 1)"
+                  (click)="removeStep(i)"
+                >
+                  <app-icon name="close" />
+                </button>
+              </div>
+            </div>
+            <label
+              >Название шага<input
+                [name]="'stepName-' + step.id"
+                [(ngModel)]="step.name"
+                required
+                maxlength="100"
+            /></label>
+            <div class="step-properties">
+              <label
+                >Исполнитель<input
+                  [name]="'stepAssignee-' + step.id"
+                  [(ngModel)]="step.assignee"
+                  list="route-people"
+                  required
+                  maxlength="100"
+                  placeholder="Выберите или введите сотрудника"
+              /></label>
+              <label
+                >Тип шага<select [name]="'stepType-' + step.id" [(ngModel)]="step.type" required>
+                  <option value="approval">Согласование</option>
+                  <option value="signing">Подписание</option>
+                </select></label
+              >
+            </div>
+          </section>
+        } @empty {
+          <p class="muted">Добавьте хотя бы один шаг, чтобы сохранить маршрут.</p>
+        }
+        <button type="button" class="button" (click)="addStep()"><app-icon name="plus" />Добавить шаг</button>
+      </fieldset>
+      @if (error) {
+        <p class="route-error" role="alert">{{ error }}</p>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="button" [disabled]="store.busy()" (click)="closeEditor()">Отмена</button
+        ><button type="submit" class="button primary" [disabled]="store.busy() || !steps.length">
+          {{ editingId ? 'Сохранить маршрут' : 'Создать маршрут' }}
+        </button>
+      </div>
+    </form>
+  </app-dialog>
+}

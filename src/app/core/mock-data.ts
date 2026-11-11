@@ -326,6 +326,7 @@ export function createSeed(): Snapshot {
       );
   }
   return {
+    workflowRoutes: [],
     folders: structuredClone(FOLDERS),
     documents,
     user: { name: 'Смирнова Е.А.', initials: 'ЕС', role: 'reviewer', substitute: '' },

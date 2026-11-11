@@ -21,6 +21,7 @@ export class EdmsStore {
     visit(undefined, 0, '');
     return rows;
   });
+  readonly workflowRoutes = computed(() => this.state()?.workflowRoutes ?? []);
   readonly tasks = computed(() => this.state()?.tasks ?? []);
   readonly user = computed(
     () =>

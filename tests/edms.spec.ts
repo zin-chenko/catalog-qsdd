@@ -213,3 +213,37 @@ test('custom folders support nested documents and direct links after reload', as
   await page.goto(folderUrl);
   await expect(page.locator('.documents-table')).toContainText('Договор проекта');
 });
+
+test('route editor creates, duplicates and reorders independent routes', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Маршруты', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Маршрутов пока нет', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Создать маршрут', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('textbox', { name: 'Название маршрута', exact: true }).fill('Договор');
+  await dialog.getByRole('textbox', { name: 'Название шага', exact: true }).fill('Проверка');
+  await dialog.getByRole('combobox', { name: 'Исполнитель', exact: true }).fill('Петрова О.В.');
+  await dialog.getByRole('button', { name: 'Добавить шаг', exact: true }).click();
+  await dialog.getByRole('textbox', { name: 'Название шага', exact: true }).nth(1).fill('Подпись');
+  await dialog.getByRole('combobox', { name: 'Исполнитель', exact: true }).nth(1).fill('Иванов А.П.');
+  await dialog.getByRole('combobox', { name: 'Тип шага', exact: true }).nth(1).selectOption('signing');
+  await dialog.getByRole('button', { name: 'Создать маршрут', exact: true }).click();
+  await expect(page.locator('.route-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Дублировать маршрут «Договор»', exact: true }).click();
+  await dialog.getByRole('textbox', { name: 'Название маршрута', exact: true }).fill('Новый договор');
+  await dialog.getByRole('button', { name: 'Поднять шаг 2', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Сохранить маршрут', exact: true }).click();
+  await page.reload();
+  const original = page
+    .locator('.route-card')
+    .filter({ has: page.getByRole('heading', { name: 'Договор', exact: true }) });
+  const copy = page
+    .locator('.route-card')
+    .filter({ has: page.getByRole('heading', { name: 'Новый договор', exact: true }) });
+  await expect(original.locator('li').first()).toContainText('Проверка');
+  await expect(copy.locator('li').first()).toContainText('Подпись');
+  await page.getByRole('button', { name: 'Редактировать маршрут «Договор»', exact: true }).click();
+  await dialog.getByRole('textbox', { name: 'Название маршрута', exact: true }).fill('Не сохранять');
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await expect(original).toBeVisible();
+});

@@ -31,6 +31,7 @@ export class AppComponent {
       this.store.folders().find((f) => f.id === 'orders')!,
   );
   readonly isTasks = computed(() => this.url().startsWith('/tasks'));
+  readonly isRoutes = computed(() => this.url().startsWith('/routes'));
   readonly isReports = computed(() => this.url().startsWith('/reports'));
   readonly notifications = computed(() => this.store.state()?.notifications ?? []);
   readonly unread = computed(() => this.notifications().filter((n) => !n.read).length);
