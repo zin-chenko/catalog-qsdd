@@ -60,8 +60,9 @@ test('create, edit, automatic version and persistence', async ({ page }) => {
   await expect(page.locator('.document-meta')).toContainText('Версия 2');
   await page.reload();
   await expect(page.locator('.document-title')).toHaveText('Тестовый приказ по архиву');
-  await page.getByRole('button', { name: 'Отправить на согласование' }).click();
-  await expect(page.locator('.document-meta app-status')).toHaveText('На согласовании');
+  await page.getByRole('button', { name: 'Запустить согласование', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Нет доступных маршрутов');
+  await expect(page.locator('.document-meta app-status')).toHaveText('Черновик');
 });
 
 test('approval changes status and route and persists', async ({ page }) => {
@@ -246,4 +247,45 @@ test('route editor creates, duplicates and reorders independent routes', async (
   await dialog.getByRole('textbox', { name: 'Название маршрута', exact: true }).fill('Не сохранять');
   await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
   await expect(original).toBeVisible();
+});
+
+test('launch UI previews selected route without mutating the document and can be reopened', async ({
+  page,
+}) => {
+  await page.goto(primary);
+  const snapshot = await page.evaluate(() => localStorage.getItem('catalog-qsdd.demo.v1'));
+  if (!snapshot) {
+    await page.getByRole('button', { name: 'Уведомления', exact: true }).click();
+    await page.getByRole('button', { name: 'Прочитать все', exact: true }).click();
+  }
+  await page.evaluate(() => {
+    const key = 'catalog-qsdd.demo.v1';
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    saved.workflowRoutes = [
+      {
+        id: 'route-ui',
+        name: 'Проверка договора',
+        steps: [
+          { id: 'step-approval', name: 'Проверка юристом', assignee: 'Петрова О.В.', type: 'approval' },
+          { id: 'step-signing', name: 'Подпись директора', assignee: 'Иванов А.П.', type: 'signing' },
+        ],
+      },
+    ];
+    localStorage.setItem(key, JSON.stringify(saved));
+  });
+  await page.reload();
+  const before = await page.evaluate(() => localStorage.getItem('catalog-qsdd.demo.v1'));
+  await page.getByRole('button', { name: 'Запустить согласование', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Запустить согласование', exact: true })).toBeDisabled();
+  await dialog.getByRole('combobox', { name: 'Маршрут согласования', exact: true }).selectOption('route-ui');
+  await expect(dialog.locator('li')).toHaveCount(2);
+  await expect(dialog.locator('li').first()).toContainText('Петрова О.В.');
+  await expect(dialog.locator('li').last()).toContainText('Подписание');
+  await dialog.getByRole('button', { name: 'Запустить согласование', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('согласование не запущено');
+  expect(await page.evaluate(() => localStorage.getItem('catalog-qsdd.demo.v1'))).toBe(before);
+  await dialog.getByRole('button', { name: 'Закрыть', exact: true }).click();
+  await page.getByRole('button', { name: 'Запустить согласование', exact: true }).click();
+  await expect(dialog.getByRole('combobox', { name: 'Маршрут согласования', exact: true })).toHaveValue('');
 });

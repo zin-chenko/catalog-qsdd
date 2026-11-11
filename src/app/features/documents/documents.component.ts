@@ -11,6 +11,7 @@ import { StatusComponent } from '../../shared/status.component';
 import { DialogComponent } from '../../shared/dialog.component';
 import { AssistantComponent } from '../assistant/assistant.component';
 import { DocumentPreviewComponent } from './document-preview.component';
+import { WorkflowLaunchComponent } from './workflow-launch.component';
 
 type Dialog = 'create' | 'edit' | 'delegate' | 'reject' | 'participant' | 'extra' | 'task' | 'compare' | null;
 type SortKey = 'number' | 'date' | 'title' | 'author' | 'status' | 'deadline';
@@ -23,6 +24,7 @@ type SortKey = 'number' | 'date' | 'title' | 'author' | 'status' | 'deadline';
     DialogComponent,
     AssistantComponent,
     DocumentPreviewComponent,
+    WorkflowLaunchComponent,
   ],
   templateUrl: './documents.component.html',
 })
@@ -312,14 +314,6 @@ export class DocumentsComponent {
       );
       this.comment = '';
     }
-  }
-  async submit(): Promise<void> {
-    const doc = this.doc();
-    if (doc)
-      await this.store.run(
-        () => this.store.api.decide(doc.id, 'submit', ''),
-        'Документ отправлен на согласование',
-      );
   }
   async upload(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;

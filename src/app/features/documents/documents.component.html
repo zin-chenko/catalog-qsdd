@@ -26,6 +26,7 @@
           ><app-status [status]="document.status" />
         </div>
         <h1 class="document-title">{{ document.title }}</h1>
+        <app-workflow-launch [document]="document" />
       }
       <nav class="document-tabs" aria-label="Вкладки документа">
         @for (item of tabs; track item.id) {
@@ -449,10 +450,7 @@
             ><button class="button primary" [disabled]="store.busy()" (click)="approve()">Согласовать</button>
           </div>
         } @else if (document.status === 'Черновик' && canEdit()) {
-          <p>Документ готовится к согласованию</p>
-          <button class="button primary" [disabled]="store.busy()" (click)="submit()">
-            Отправить на согласование
-          </button>
+          <p>Документ готовится к согласованию. Выберите маршрут кнопкой «Запустить согласование».</p>
         } @else {
           <div class="decision-complete">
             <app-icon [name]="document.status === 'Отклонён' ? 'bell' : 'check'" /><span>{{
