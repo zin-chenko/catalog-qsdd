@@ -2561,3 +2561,33 @@ label small {
     flex-direction: row;
   }
 }
+
+.catalog-heading,
+.folder-tree-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.catalog-heading {
+  justify-content: space-between;
+}
+.folder-tree-row .folder-item {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.folder-tree-row .folder-item > span:first-of-type {
+  overflow-wrap: anywhere;
+}
+.add-subfolder {
+  flex: none;
+  width: 26px;
+  height: 30px;
+}
+.folder-error {
+  color: #b42318;
+}
+.breadcrumb > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}

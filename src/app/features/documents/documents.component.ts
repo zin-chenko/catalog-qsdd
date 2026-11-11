@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EdmsStore } from '../../core/edms.store';
 import { DocumentFilesService } from '../../core/document-files.service';
-import { FOLDERS, PEOPLE } from '../../core/mock-data';
+import { PEOPLE } from '../../core/mock-data';
 import { AssistantReference, DocumentTab, EdmsDocument, formatDate, today } from '../../core/models';
 import { IconComponent } from '../../shared/icon.component';
 import { StatusComponent } from '../../shared/status.component';
@@ -33,7 +33,15 @@ export class DocumentsComponent {
   readonly files = inject(DocumentFilesService);
   readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
-  readonly folder = computed(() => FOLDERS.find((f) => f.id === this.params().get('folderId')) ?? FOLDERS[3]);
+  readonly folder = computed(
+    () =>
+      this.store.folders().find((f) => f.id === this.params().get('folderId')) ??
+      this.store.folders().find((f) => f.id === 'orders')!,
+  );
+  readonly folderPath = computed(
+    () =>
+      this.store.folderTree().find((row) => row.folder.id === this.folder().id)?.path ?? this.folder().name,
+  );
   readonly tab = computed<DocumentTab>(() => {
     const tab = this.params().get('tab');
     return ['card', 'preview', 'route', 'versions'].includes(tab ?? '') ? (tab as DocumentTab) : 'list';

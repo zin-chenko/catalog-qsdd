@@ -4,7 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { EdmsStore } from './core/edms.store';
-import { FOLDERS, PEOPLE } from './core/mock-data';
+import { PEOPLE } from './core/mock-data';
 import { STATUSES } from './core/models';
 import { IconComponent } from './shared/icon.component';
 import { DialogComponent } from './shared/dialog.component';
@@ -25,7 +25,11 @@ export class AppComponent {
     { initialValue: this.router.url },
   );
   readonly folderId = computed(() => this.url().split('?')[0].split('/')[2] || 'orders');
-  readonly folder = computed(() => FOLDERS.find((f) => f.id === this.folderId()) ?? FOLDERS[3]);
+  readonly folder = computed(
+    () =>
+      this.store.folders().find((f) => f.id === this.folderId()) ??
+      this.store.folders().find((f) => f.id === 'orders')!,
+  );
   readonly isTasks = computed(() => this.url().startsWith('/tasks'));
   readonly isReports = computed(() => this.url().startsWith('/reports'));
   readonly notifications = computed(() => this.store.state()?.notifications ?? []);
@@ -34,7 +38,32 @@ export class AppComponent {
   readonly filtersOpen = signal(false);
   readonly notificationsOpen = signal(false);
   readonly profileOpen = signal(false);
-  readonly folders = FOLDERS;
+  readonly folderDialogOpen = signal(false);
+  readonly parentFolders = computed(() =>
+    this.store.folderTree().filter((row) => !['center', 'tasks'].includes(row.folder.id)),
+  );
+  newFolderName = '';
+  newFolderParent = '';
+  folderError = '';
+  showCreateFolder(parentId = ''): void {
+    this.newFolderName = '';
+    this.newFolderParent = parentId;
+    this.folderError = '';
+    this.folderDialogOpen.set(true);
+  }
+  async createFolder(): Promise<void> {
+    this.folderError = '';
+    const folder = await this.store.run(
+      () => this.store.api.createFolder(this.newFolderName, this.newFolderParent || undefined),
+      'Папка создана',
+    );
+    if (folder) {
+      this.folderDialogOpen.set(false);
+      this.openFolder(folder.id);
+    } else {
+      this.folderError = this.store.toast()?.text ?? 'Не удалось создать папку.';
+    }
+  }
   readonly statuses = STATUSES;
   readonly people = PEOPLE;
   readonly types = computed(() => [...new Set(this.store.documents().map((d) => d.type))]);

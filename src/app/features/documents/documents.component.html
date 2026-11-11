@@ -2,8 +2,7 @@
   <main class="document-main panel">
     <header class="document-heading">
       <div class="breadcrumb">
-        <span>{{ folder().parent || 'Центр документов' }}</span
-        ><app-icon name="chevron" /><span>{{ folder().name }}</span
+        <span>{{ folderPath() }}</span
         ><button
           class="icon-button assistant-toggle"
           aria-label="Показать или скрыть AI-ассистента"

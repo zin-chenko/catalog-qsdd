@@ -191,3 +191,25 @@ test('visual snapshots of all five desktop tabs', async ({ page }) => {
     await page.screenshot({ path: `tmp/ui/${tab}.png`, fullPage: true });
   }
 });
+
+test('custom folders support nested documents and direct links after reload', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Создать папку', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Название папки', exact: true }).fill('Проекты 2027');
+  await page.getByRole('dialog').getByRole('button', { name: 'Создать папку', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Проекты 2027', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Создать подпапку в «Проекты 2027»', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Название папки', exact: true }).fill('Договоры');
+  await page.getByRole('dialog').getByRole('button', { name: 'Создать папку', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Договоры', exact: true })).toBeVisible();
+  await expect(page.locator('.breadcrumb')).toContainText('Проекты 2027 / Договоры');
+  const folderUrl = page.url();
+  await page.getByRole('button', { name: 'Создать документ', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Заголовок документа' }).fill('Договор проекта');
+  await page.getByRole('button', { name: 'Создать', exact: true }).click();
+  await expect(page.locator('.document-title')).toHaveText('Договор проекта');
+  await page.reload();
+  await expect(page.locator('.document-title')).toHaveText('Договор проекта');
+  await page.goto(folderUrl);
+  await expect(page.locator('.documents-table')).toContainText('Договор проекта');
+});

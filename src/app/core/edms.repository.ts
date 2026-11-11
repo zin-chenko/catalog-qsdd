@@ -4,17 +4,19 @@ import {
   AssistantMessage,
   DocumentFile,
   EdmsDocument,
+  Folder,
   NewDocument,
   Snapshot,
   Task,
   User,
   today,
 } from './models';
-import { createSeed, makeDocument } from './mock-data';
+import { createSeed, FOLDERS, makeDocument } from './mock-data';
 
 /** Backend boundary. Replace the provider with an HTTP implementation when the API is ready. */
 export abstract class EdmsRepository {
   abstract load(): Promise<Snapshot>;
+  abstract createFolder(name: string, parentId?: string): Promise<Folder>;
   abstract create(input: NewDocument): Promise<EdmsDocument>;
   abstract save(
     document: EdmsDocument,
@@ -61,7 +63,7 @@ export class MockEdmsRepository extends EdmsRepository {
           Array.isArray(state.notifications) &&
           state.user?.name
         )
-          return state;
+          return { ...state, folders: state.folders ?? structuredClone(FOLDERS) };
       }
     } catch {
       /* Invalid or unavailable browser storage: start a clean demo session. */
@@ -102,7 +104,39 @@ export class MockEdmsRepository extends EdmsRepository {
   override async load(): Promise<Snapshot> {
     return structuredClone(this.state);
   }
+  override async createFolder(name: string, parentId?: string): Promise<Folder> {
+    const trimmed = name.trim();
+    if (!trimmed) throw new Error('Введите название папки.');
+    if (trimmed.length > 100) throw new Error('Название папки не должно превышать 100 символов.');
+    return this.transaction(() => {
+      if (
+        parentId &&
+        (!this.state.folders.some((f) => f.id === parentId) || ['center', 'tasks'].includes(parentId))
+      )
+        throw new Error('Выберите существующую папку для вложения.');
+      if (
+        this.state.folders.some(
+          (f) =>
+            f.parentId === parentId && f.name.toLocaleLowerCase('ru') === trimmed.toLocaleLowerCase('ru'),
+        )
+      )
+        throw new Error('Папка с таким названием уже существует на этом уровне.');
+      const folder: Folder = {
+        id: crypto.randomUUID(),
+        name: trimmed,
+        icon: 'folder',
+        ...(parentId ? { parentId } : {}),
+      };
+      this.state.folders.push(folder);
+      return folder;
+    });
+  }
   override async create(input: NewDocument): Promise<EdmsDocument> {
+    if (
+      !this.state.folders.some((f) => f.id === input.folderId) ||
+      ['center', 'tasks'].includes(input.folderId)
+    )
+      throw new Error('Папка для документа не найдена.');
     if (!input.title.trim()) throw new Error('Введите заголовок документа.');
     return this.transaction(() => {
       const doc = makeDocument({

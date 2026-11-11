@@ -1,12 +1,26 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { EdmsRepository } from './edms.repository';
-import { Snapshot } from './models';
+import { Folder, Snapshot } from './models';
+import { FOLDERS } from './mock-data';
 
 @Injectable({ providedIn: 'root' })
 export class EdmsStore {
   readonly api = inject(EdmsRepository);
   readonly state = signal<Snapshot | null>(null);
   readonly documents = computed(() => this.state()?.documents ?? []);
+  readonly folders = computed(() => this.state()?.folders ?? FOLDERS);
+  readonly folderTree = computed(() => {
+    const rows: { folder: Folder; depth: number; path: string }[] = [];
+    const visit = (parentId: string | undefined, depth: number, path: string) => {
+      for (const folder of this.folders().filter((f) => f.parentId === parentId)) {
+        const fullPath = path ? `${path} / ${folder.name}` : folder.name;
+        rows.push({ folder, depth, path: fullPath });
+        visit(folder.id, depth + 1, fullPath);
+      }
+    };
+    visit(undefined, 0, '');
+    return rows;
+  });
   readonly tasks = computed(() => this.state()?.tasks ?? []);
   readonly user = computed(
     () =>

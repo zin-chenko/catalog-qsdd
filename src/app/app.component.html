@@ -69,7 +69,17 @@
   }
   <aside class="sidebar panel" [class.mobile-open]="sidebarOpen()" aria-label="Каталог документов">
     <div class="catalog-controls">
-      <div class="catalog-label">КАТАЛОГ <span class="subtle-dot"></span></div>
+      <div class="catalog-heading">
+        <div class="catalog-label">КАТАЛОГ <span class="subtle-dot"></span></div>
+        <button
+          class="icon-button"
+          aria-label="Создать папку"
+          title="Создать папку"
+          (click)="showCreateFolder()"
+        >
+          <app-icon name="plus" />
+        </button>
+      </div>
       <div class="folder-search-row">
         <label class="input-icon folder-search"
           ><app-icon name="search" /><input
@@ -144,28 +154,32 @@
       }
     </div>
     <nav class="folder-tree" aria-label="Папки">
-      @for (item of folders; track item.id) {
-        @if (item.id === 'orders') {
-          <div class="folder-group">
-            <app-icon name="folder" /><strong>Организационно-<br />распорядительные</strong>
-          </div>
-        }
-        <button
-          class="folder-item"
-          [class.child-folder]="!!item.parent"
-          [class.selected]="
-            (item.id === folder().id && !isTasks() && !isReports()) || (item.id === 'tasks' && isTasks())
-          "
-          (click)="openFolder(item.id)"
-        >
-          @if (!item.parent) {
+      @for (row of store.folderTree(); track row.folder.id) {
+        @let item = row.folder;
+        <div class="folder-tree-row" [style.padding-left.px]="12 * (row.depth > 5 ? 5 : row.depth)">
+          <button
+            class="folder-item"
+            [title]="row.path"
+            [class.selected]="
+              (item.id === folder().id && !isTasks() && !isReports()) || (item.id === 'tasks' && isTasks())
+            "
+            (click)="openFolder(item.id)"
+          >
             <app-icon [name]="item.icon" />
-          }
-          <span>{{ item.name }}</span>
-          @if (['center', 'incoming', 'orders', 'directives', 'memos', 'tasks'].includes(item.id)) {
+            <span>{{ item.name }}</span>
             <span class="folder-count" [class.warm]="item.id === 'tasks'">{{ count(item.id) }}</span>
+          </button>
+          @if (item.id !== 'center' && item.id !== 'tasks') {
+            <button
+              class="icon-button add-subfolder"
+              [attr.aria-label]="'Создать подпапку в «' + item.name + '»'"
+              title="Создать подпапку"
+              (click)="showCreateFolder(item.id)"
+            >
+              <app-icon name="plus" />
+            </button>
           }
-        </button>
+        </div>
       }
     </nav>
     <div class="sidebar-footer">
@@ -217,4 +231,36 @@
       </div>
     </form></app-dialog
   >
+}
+
+@if (folderDialogOpen()) {
+  <app-dialog title="Новая папка" (closed)="folderDialogOpen.set(false)">
+    <form class="dialog-body" (ngSubmit)="createFolder()">
+      <label
+        >Название папки<input
+          name="folderName"
+          [(ngModel)]="newFolderName"
+          maxlength="100"
+          required
+          placeholder="Например, Проекты 2027"
+      /></label>
+      <label
+        >Расположение<select name="folderParent" [(ngModel)]="newFolderParent">
+          <option value="">Корень каталога</option>
+          @for (row of parentFolders(); track row.folder.id) {
+            <option [value]="row.folder.id">{{ row.path }}</option>
+          }
+        </select></label
+      >
+      @if (folderError) {
+        <p role="alert" class="folder-error">{{ folderError }}</p>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="button" (click)="folderDialogOpen.set(false)">Отмена</button>
+        <button class="button primary" [disabled]="store.busy() || !newFolderName.trim()">
+          Создать папку
+        </button>
+      </div>
+    </form>
+  </app-dialog>
 }

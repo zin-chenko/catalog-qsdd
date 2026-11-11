@@ -5,7 +5,7 @@ export interface Folder {
   id: string;
   name: string;
   icon: string;
-  parent?: string;
+  parentId?: string;
 }
 export interface DocumentFile {
   id: string;
@@ -86,6 +86,7 @@ export interface User {
   substitute: string;
 }
 export interface Snapshot {
+  folders: Folder[];
   documents: EdmsDocument[];
   tasks: Task[];
   notifications: Notification[];

@@ -9,7 +9,8 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:repository": "playwright test --config playwright.repository.config.ts"
   },
   "dependencies": {
     "@angular/common": "^21.0.0",

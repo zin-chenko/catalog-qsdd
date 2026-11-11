@@ -4,9 +4,10 @@ export const FOLDERS: Folder[] = [
   { id: 'center', name: 'Центр документов', icon: 'folder' },
   { id: 'incoming', name: 'Входящая корреспонденция', icon: 'folder' },
   { id: 'outgoing', name: 'Исходящая корреспонденция', icon: 'folder' },
-  { id: 'orders', name: 'Приказы', icon: 'folder', parent: 'Организационно-распорядительные' },
-  { id: 'directives', name: 'Распоряжения', icon: 'folder', parent: 'Организационно-распорядительные' },
-  { id: 'memos', name: 'Служебные записки', icon: 'folder', parent: 'Организационно-распорядительные' },
+  { id: 'organizational', name: 'Организационно-распорядительные', icon: 'folder' },
+  { id: 'orders', name: 'Приказы', icon: 'folder', parentId: 'organizational' },
+  { id: 'directives', name: 'Распоряжения', icon: 'folder', parentId: 'organizational' },
+  { id: 'memos', name: 'Служебные записки', icon: 'folder', parentId: 'organizational' },
   { id: 'regulations', name: 'Внутренние нормативные', icon: 'folder' },
   { id: 'tasks', name: 'Контроль поручений', icon: 'check-square' },
   { id: 'minutes', name: 'Протоколы заседаний', icon: 'folder' },
@@ -325,6 +326,7 @@ export function createSeed(): Snapshot {
       );
   }
   return {
+    folders: structuredClone(FOLDERS),
     documents,
     user: { name: 'Смирнова Е.А.', initials: 'ЕС', role: 'reviewer', substitute: '' },
     tasks: Array.from({ length: 5 }, (_, i) => ({
