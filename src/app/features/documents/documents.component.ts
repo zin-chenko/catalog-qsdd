@@ -12,6 +12,7 @@ import { DialogComponent } from '../../shared/dialog.component';
 import { AssistantComponent } from '../assistant/assistant.component';
 import { DocumentPreviewComponent } from './document-preview.component';
 import { WorkflowLaunchComponent } from './workflow-launch.component';
+import { DocumentApprovalsComponent } from './document-approvals.component';
 
 type Dialog = 'create' | 'edit' | 'delegate' | 'reject' | 'participant' | 'extra' | 'task' | 'compare' | null;
 type SortKey = 'number' | 'date' | 'title' | 'author' | 'status' | 'deadline';
@@ -25,6 +26,7 @@ type SortKey = 'number' | 'date' | 'title' | 'author' | 'status' | 'deadline';
     AssistantComponent,
     DocumentPreviewComponent,
     WorkflowLaunchComponent,
+    DocumentApprovalsComponent,
   ],
   templateUrl: './documents.component.html',
 })
@@ -46,7 +48,8 @@ export class DocumentsComponent {
   );
   readonly tab = computed<DocumentTab>(() => {
     const tab = this.params().get('tab');
-    return ['card', 'preview', 'route', 'versions'].includes(tab ?? '') ? (tab as DocumentTab) : 'list';
+    if (tab === 'route') return 'approvals';
+    return ['card', 'preview', 'approvals', 'versions'].includes(tab ?? '') ? (tab as DocumentTab) : 'list';
   });
   readonly selectedId = signal<string | null>('order-214');
   readonly doc = computed(() => {
@@ -149,7 +152,7 @@ export class DocumentsComponent {
     { id: 'list', label: 'Список документов' },
     { id: 'card', label: 'Карточка документа' },
     { id: 'preview', label: 'Предпросмотр' },
-    { id: 'route', label: 'Маршрут' },
+    { id: 'approvals', label: 'Согласования' },
     { id: 'versions', label: 'Версии' },
   ];
   readonly columns: { key: SortKey; label: string }[] = [

@@ -290,82 +290,8 @@
               (currentVersion)="previewVersion.set(null)"
             />
           }
-          @case ('route') {
-            <section class="route-content">
-              <div class="route-toolbar">
-                <p>
-                  Шаблон: <strong>ОРД — приказ</strong> · последовательно-параллельный ·
-                  {{
-                    currentStage()
-                      ? 'этап ' +
-                        (document.route.indexOf(currentStage()!) + 1) +
-                        ' из ' +
-                        document.route.length
-                      : 'завершён'
-                  }}
-                </p>
-                <div>
-                  <button
-                    class="button small"
-                    [disabled]="!canChangeRoute()"
-                    title="Доступно инициатору и администратору активного процесса"
-                    (click)="showDialog('participant')"
-                  >
-                    <app-icon name="plus" />Участник</button
-                  ><button
-                    class="button small"
-                    [disabled]="!canChangeRoute()"
-                    title="Доступно инициатору и администратору активного процесса"
-                    (click)="showDialog('extra')"
-                  >
-                    Доп. согласование
-                  </button>
-                </div>
-              </div>
-              <ol class="timeline">
-                @for (step of document.route; track step.id) {
-                  <li [class]="'timeline-step ' + step.state">
-                    <span class="step-marker">
-                      @if (step.state === 'done') {
-                        <app-icon name="check" />
-                      } @else {
-                        {{ $index + 1 }}
-                      }
-                    </span>
-                    <div class="step-content">
-                      <h3>
-                        {{ $index + 1 }}. {{ step.title }}
-                        @if (step.state === 'current') {
-                          <span> — текущий этап</span>
-                        }
-                        @if (step.parallel) {
-                          <small> · параллельно</small>
-                        }
-                      </h3>
-                      @for (participant of step.participants; track $index) {
-                        <div class="participant" [class.participant-card]="step.parallel">
-                          <div class="participant-line">
-                            <span>{{ participant.name }}</span
-                            ><span class="decision-text"
-                              >{{ participant.decision }}
-                              @if (participant.date) {
-                                · {{ participant.date }}
-                              }
-                            </span>
-                          </div>
-                          @if (participant.comment) {
-                            <p class="participant-comment">«{{ participant.comment }}»</p>
-                          }
-                        </div>
-                      }
-                      @if (step.state === 'current' && document.deadline) {
-                        <p class="stage-deadline">Срок {{ date(document.deadline) }}</p>
-                      }
-                    </div>
-                  </li>
-                }
-              </ol>
-            </section>
+          @case ('approvals') {
+            <app-document-approvals [document]="document" />
           }
           @case ('versions') {
             <section class="versions-content">

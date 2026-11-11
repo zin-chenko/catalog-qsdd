@@ -27,9 +27,9 @@ test('five tabs, contextual assistant citation, version comparison and file swit
   await page.getByRole('button', { name: 'Ключевые сроки', exact: true }).click();
   await page.locator('.message-references').last().getByRole('button', { name: 'п. 3', exact: true }).click();
   await expect(page.locator('.highlighted-paragraph')).toContainText('25.11.2026');
-  await page.getByRole('button', { name: 'Маршрут', exact: true }).click();
+  await page.getByRole('button', { name: 'Согласования', exact: true }).click();
+  await page.locator('.approval-card summary').click();
   await expect(page.locator('.timeline-step')).toHaveCount(5);
-  await expect(page.getByRole('button', { name: 'Участник', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Версии', exact: false }).first().click();
   await page.getByRole('button', { name: 'Сравнить выбранные (2)' }).click();
   await expect(page.locator('.diff-removed')).toContainText('ранее действующее');
@@ -70,7 +70,8 @@ test('approval changes status and route and persists', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Комментарий к решению' }).fill('Согласовано без замечаний');
   await page.getByRole('button', { name: 'Согласовать', exact: true }).click();
   await expect(page.locator('.document-meta app-status')).toHaveText('На подписании');
-  await page.getByRole('button', { name: 'Маршрут', exact: true }).click();
+  await page.getByRole('button', { name: 'Согласования', exact: true }).click();
+  await page.locator('.approval-card summary').click();
   await expect(page.locator('.timeline-step.current')).toContainText('Подписание УКЭП');
   await expect(page.locator('.timeline')).toContainText('Согласовано без замечаний');
   await page.reload();
@@ -109,23 +110,15 @@ test('assistant creates a task that can be completed', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Ознакомить отдел тестирования' })).toBeVisible();
 });
 
-test('admin can change route; registered documents are read only', async ({ page }) => {
-  await page.goto(primary);
-  await page.getByRole('button', { name: 'ЕС Смирнова Е.' }).click();
-  await page.getByRole('combobox', { name: 'Роль в демоверсии' }).selectOption('admin');
-  await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
-  await page.getByRole('button', { name: 'Маршрут', exact: true }).click();
-  await page.getByRole('button', { name: 'Доп. согласование', exact: true }).click();
-  await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
-  await expect(page.locator('.timeline-step')).toHaveCount(6);
-  await page.getByRole('button', { name: 'Согласовать', exact: true }).click();
-  await expect(page.locator('.timeline-step.current')).toContainText('Дополнительное согласование');
-  await expect(page.locator('.document-meta app-status')).toHaveText('На согласовании');
-  await page.getByRole('button', { name: 'Согласовать', exact: true }).click();
-  await expect(page.locator('.timeline-step.current')).toContainText('Подписание УКЭП');
+test('registered documents are read only and their approvals can be inspected', async ({ page }) => {
   await page.goto('/documents/orders/order-1/card');
   await expect(page.getByText('Только чтение', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Редактировать', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Согласования', exact: true }).click();
+  await expect(page.locator('.approval-card')).toHaveCount(1);
+  await expect(page.locator('.approval-card')).toContainText('Согласовано');
+  await page.locator('.approval-card summary').click();
+  await expect(page.locator('.timeline-step')).toHaveCount(5);
 });
 
 test('document download is a valid docx and uploaded file is previewable', async ({ page }) => {
@@ -186,7 +179,7 @@ test('visual snapshots of all five desktop tabs', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.documents-table tbody tr')).toHaveCount(20);
   await page.screenshot({ path: 'tmp/ui/list.png', fullPage: true });
-  for (const tab of ['card', 'preview', 'route', 'versions']) {
+  for (const tab of ['card', 'preview', 'approvals', 'versions']) {
     await page.goto(`/documents/orders/order-214/${tab}`);
     await expect(page.locator('.document-title')).toBeVisible();
     await page.screenshot({ path: `tmp/ui/${tab}.png`, fullPage: true });

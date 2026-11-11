@@ -1,6 +1,6 @@
 export type DocumentStatus =
   'На согласовании' | 'Зарегистрирован' | 'На подписании' | 'Отклонён' | 'Черновик';
-export type DocumentTab = 'list' | 'card' | 'preview' | 'route' | 'versions';
+export type DocumentTab = 'list' | 'card' | 'preview' | 'approvals' | 'versions';
 export interface Folder {
   id: string;
   name: string;
@@ -39,7 +39,19 @@ export interface RouteStep {
   parallel?: boolean;
   participants: RouteParticipant[];
 }
+export interface DocumentApproval {
+  id: string;
+  routeId?: string;
+  routeName: string;
+  version: number;
+  status: 'На согласовании' | 'На подписании' | 'Согласовано' | 'Отклонено' | 'Отозвано';
+  initiator: string;
+  startedAt: string;
+  finishedAt?: string;
+  steps: RouteStep[];
+}
 export interface EdmsDocument {
+  approvals?: DocumentApproval[];
   id: string;
   folderId: string;
   number: string;
@@ -60,6 +72,7 @@ export interface EdmsDocument {
   tags: string[];
   files: DocumentFile[];
   versions: DocumentVersion[];
+  /** Legacy demo state; BPM-backed history uses approvals. */
   route: RouteStep[];
   assignee: string;
   paragraphs: string[];
