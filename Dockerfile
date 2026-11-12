@@ -1,7 +1,7 @@
 FROM node:22-alpine AS build
 
 WORKDIR /app
-ARG NPM_REGISTRY=http://repolib-main.diasoft.ru:8081/repository/npm-public-and-diasoft/
+ARG NPM_REGISTRY=https://registry.npmjs.org/
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN npm install --global pnpm@11.25.0 --registry=${NPM_REGISTRY} --no-audit --no-fund
 RUN pnpm install --frozen-lockfile --registry=${NPM_REGISTRY}

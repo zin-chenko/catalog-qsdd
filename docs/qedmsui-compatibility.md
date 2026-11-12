@@ -6,7 +6,8 @@
 
 | Настройка                   | catalog-qsdd в этой ветке                                                  |
 | --------------------------- | -------------------------------------------------------------------------- |
-| Источник всех npm-пакетов   | `http://repolib-main.diasoft.ru:8081/repository/npm-public-and-diasoft/`   |
+| Источник публичных пакетов  | `https://registry.npmjs.org/`                                              |
+| Источник `@diasoft/*`       | `http://repolib-main.diasoft.ru:8081/repository/npm-public-and-diasoft/`   |
 | Пакетный менеджер           | pnpm; версия 11.25.0 закреплена по установленной локально версии           |
 | Фиксация дерева пакетов     | `pnpm-lock.yaml`, установка с `--frozen-lockfile`                          |
 | Angular runtime / compiler  | 21.2.19, как в qedmsui                                                     |
@@ -32,15 +33,15 @@ pnpm run prod
 pnpm test
 ```
 
-Обычная установка использует Nexus из `.npmrc`. Если корпоративная сеть недоступна, публичные зависимости этой версии можно проверить явно через npmjs:
+Обычная установка использует маршрутизацию из `.npmrc`: публичные пакеты — npmjs, `@diasoft/*` — Nexus. Это осознанное отличие от qedmsui: при установке Nexus вернул 404 для публичной зависимости каталога `mammoth`. Пока QPalette не установлена, демоверсию можно установить без корпоративной сети:
 
 ```sh
 pnpm install --frozen-lockfile --registry=https://registry.npmjs.org/
 ```
 
-Переопределение действует только на эту команду. Lock-файл содержит версии и integrity, без жёсткой привязки tarball URL к npmjs. В проект не копируются npm-токены или персональные настройки авторизации.
+Переопределение общего registry действует только на эту команду; scoped registry `@diasoft` остаётся корпоративным. Lock-файл содержит версии и integrity, без жёсткой привязки tarball URL к npmjs. В проект не копируются npm-токены или персональные настройки авторизации.
 
-Docker также использует pnpm и Nexus по умолчанию. Для проверки без корпоративной сети:
+Docker также использует pnpm, npmjs для публичных пакетов и scoped Nexus из `.npmrc`. Демоверсия без установленных зависимостей QPalette собирается без корпоративной сети:
 
 ```sh
 docker compose build --build-arg NPM_REGISTRY=https://registry.npmjs.org/

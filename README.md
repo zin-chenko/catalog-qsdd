@@ -4,7 +4,7 @@ Angular-приложение Q.EDMS по макетам `Q.EDMS_макеты_с_
 
 ## Ветка совместимости с qedmsui
 
-В этой ветке установка выполняется pnpm 11.25.0 через корпоративный Nexus, указанный в `.npmrc`. Нужен доступ к сети Diasoft. Angular и сборочные зависимости согласованы с локальным `qedmsui/QEDMSUI`; подробности и границы переноса — [docs/qedmsui-compatibility.md](docs/qedmsui-compatibility.md).
+В этой ветке установка выполняется pnpm 11.25.0. Публичные зависимости загружаются из npmjs, пакеты `@diasoft/*` — из корпоративного Nexus; маршрутизация задана в `.npmrc`. Для QPalette нужен доступ к сети Diasoft. Angular и сборочные зависимости согласованы с локальным `qedmsui/QEDMSUI`; подробности и границы переноса — [docs/qedmsui-compatibility.md](docs/qedmsui-compatibility.md).
 
 ## Запуск
 
