@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { pnpmCommand } from './pnpm-command.mjs';
 
 const root = new URL('../', import.meta.url);
 const packages = JSON.parse(readFileSync(new URL('config/qpalette-packages.json', root), 'utf8'));
@@ -13,6 +14,7 @@ const pnpm = process.env.npm_execpath;
 if (!pnpm || !/pnpm/i.test(pnpm)) {
   throw new Error('Запустите через pnpm run setup:qpalette');
 }
-const result = spawnSync(process.execPath, [pnpm, ...args], { cwd: root, stdio: 'inherit' });
+const invocation = pnpmCommand(pnpm, args);
+const result = spawnSync(invocation.command, invocation.args, { cwd: root, stdio: 'inherit' });
 if (result.error) throw result.error;
 process.exitCode = result.status ?? 1;
