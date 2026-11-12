@@ -22,19 +22,12 @@ export class DocumentFilesService {
       reader.readAsDataURL(file);
     });
     if (kind === 'PDF') dataUrl = dataUrl.replace(/^data:[^;]*;/, 'data:application/pdf;');
-    let text: string | undefined;
-    if (kind === 'DOCX') {
-      const mammoth = await import('mammoth');
-      const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
-      text = result.value;
-    }
     return {
       id: crypto.randomUUID(),
       name: file.name,
       size: `${Math.max(1, Math.round(file.size / 1024))} КБ`,
       kind,
       dataUrl,
-      text,
     };
   }
   async download(doc: EdmsDocument, file: DocumentFile): Promise<void> {

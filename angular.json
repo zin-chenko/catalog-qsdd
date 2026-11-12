@@ -23,16 +23,6 @@
               }
             ],
             "styles": ["src/styles.css"],
-            "allowedCommonJsDependencies": [
-              "mammoth",
-              "lop",
-              "base64-js",
-              "jszip",
-              "dingbat-to-unicode",
-              "xmlbuilder",
-              "@xmldom/xmldom",
-              "@xmldom/xmldom/lib/dom"
-            ],
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
             "extraWebpackConfig": "webpack.config.js",

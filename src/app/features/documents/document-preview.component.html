@@ -15,7 +15,7 @@
     <button
       class="icon-button bordered"
       aria-label="Уменьшить масштаб"
-      [disabled]="zoom() <= 60"
+      [disabled]="previewUnavailable() || zoom() <= 60"
       (click)="zoom.set(zoom() - 10)"
     >
       <app-icon name="minus" /></button
@@ -23,12 +23,15 @@
     ><button
       class="icon-button bordered"
       aria-label="Увеличить масштаб"
-      [disabled]="zoom() >= 160"
+      [disabled]="previewUnavailable() || zoom() >= 160"
       (click)="zoom.set(zoom() + 10)"
     >
-      <app-icon name="plus" /></button
-    ><span class="page-count">стр. 1 из 1</span
-    ><button class="icon-button bordered" aria-label="Скачать открытый файл" (click)="download()">
+      <app-icon name="plus" />
+    </button>
+    @if (!previewUnavailable()) {
+      <span class="page-count">стр. 1 из 1</span>
+    }
+    <button class="icon-button bordered" aria-label="Скачать открытый файл" (click)="download()">
       <app-icon name="download" />
     </button>
   </div>
@@ -54,6 +57,12 @@
       [alt]="selectedFile().name"
       [style.width.%]="zoom()"
     />
+  } @else if (previewUnavailable()) {
+    <section class="document-paper" aria-label="Предпросмотр недоступен">
+      <h2>Предпросмотр DOCX пока недоступен</h2>
+      <p>Скачайте файл «{{ selectedFile().name }}», чтобы открыть его в текстовом редакторе.</p>
+      <button class="button primary" (click)="download()">Скачать файл</button>
+    </section>
   } @else {
     <article class="document-paper" [style.zoom]="zoom() / 100">
       @if (selectedFile().text; as text) {

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 const primary = '/documents/orders/order-214/card';
 test('catalog, search, sorting and real pagination', async ({ page }) => {
@@ -121,7 +122,7 @@ test('registered documents are read only and their approvals can be inspected', 
   await expect(page.locator('.timeline-step')).toHaveCount(5);
 });
 
-test('document download is a valid docx and uploaded file is previewable', async ({ page }) => {
+test('uploaded DOCX can be downloaded unchanged without a misleading preview', async ({ page }) => {
   await page.goto(primary);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Скачать Приказ_214-П.docx', exact: true }).click();
@@ -129,17 +130,28 @@ test('document download is a valid docx and uploaded file is previewable', async
   expect(download.suggestedFilename()).toBe('Приказ_214-П.docx');
   const path = await download.path();
   expect(path).toBeTruthy();
+  const originalBytes = await readFile(path!);
   await page.getByRole('button', { name: 'ЕС Смирнова Е.' }).click();
   await page.getByRole('combobox', { name: 'Роль в демоверсии' }).selectOption('admin');
   await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
   await page.locator('input[type=file]').setInputFiles({
     name: 'Проверка.docx',
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    buffer: await (await import('node:fs/promises')).readFile(path!),
+    buffer: originalBytes,
   });
   await expect(page.locator('.file-row')).toHaveCount(4);
   await page.locator('.file-row').last().getByRole('button', { name: 'Просмотреть' }).click();
-  await expect(page.locator('.attachment-text')).toContainText('Утвердить Положение');
+  await expect(page.getByRole('heading', { name: 'Предпросмотр DOCX пока недоступен' })).toBeVisible();
+  await expect(page.locator('.paper-bank')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Увеличить масштаб' })).toBeDisabled();
+  await page.reload();
+  await page.getByRole('tab', { name: 'Проверка.docx', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Предпросмотр DOCX пока недоступен' })).toBeVisible();
+  const uploadedDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Скачать файл', exact: true }).click();
+  const uploadedDownload = await uploadedDownloadPromise;
+  expect(uploadedDownload.suggestedFilename()).toBe('Проверка.docx');
+  expect(await readFile((await uploadedDownload.path())!)).toEqual(originalBytes);
 });
 
 test('filters, global search, notification and reports', async ({ page }) => {

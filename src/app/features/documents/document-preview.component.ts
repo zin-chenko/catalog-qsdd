@@ -24,6 +24,10 @@ export class DocumentPreviewComponent {
   readonly selectedFile = computed(
     () => this.document().files.find((f) => f.id === this.fileId()) ?? this.document().files[0],
   );
+  readonly previewUnavailable = computed(() => {
+    const file = this.selectedFile();
+    return file.kind === 'DOCX' && !!file.dataUrl && !file.text;
+  });
   readonly selectedVersion = computed(
     () => this.document().versions.find((v) => v.number === this.version()) ?? this.document().versions[0],
   );
