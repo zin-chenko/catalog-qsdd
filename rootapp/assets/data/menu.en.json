@@ -1,8 +1,8 @@
 [
   {
     "caption": "Document catalog",
-    "service": "qcatalogqsddui",
-    "component": "qcatalogqsddui",
+    "service": "qsddui",
+    "component": "qsddui",
     "route": "/documents/orders",
     "icon": "pi-folder",
     "default": true

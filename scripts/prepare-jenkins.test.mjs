@@ -14,7 +14,7 @@ test('stages a standalone pbcui context without altering the source or lockfile'
   const originalLock = readFileSync(join(source, 'pnpm-lock.yaml'), 'utf8');
   const bundle = prepareJenkins(source, target);
   const manifest = JSON.parse(readFileSync(join(bundle, 'package.json'), 'utf8'));
-  assert.equal(manifest.scripts.prod, 'pnpm run build:qpalette --output-path=dist/qcatalogqsddui');
+  assert.equal(manifest.scripts.prod, 'pnpm run build:qpalette --output-path=dist/qsddui');
   assert.deepEqual(manifest.dependencies, JSON.parse(originalPackage).dependencies);
   assert.equal(readFileSync(join(bundle, 'pnpm-lock.yaml'), 'utf8'), originalLock);
   assert.equal(readFileSync(join(source, 'package.json'), 'utf8'), originalPackage);

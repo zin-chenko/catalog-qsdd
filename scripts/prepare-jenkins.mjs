@@ -2,7 +2,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const bundleName = 'QCATALOGQSDDUI';
+export const bundleName = 'QSDDUI';
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const bundleFiles = [
   'package.json',
@@ -35,7 +35,7 @@ export function prepareJenkins(source, destination) {
   const manifestPath = join(bundle, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   // The shared pbcui Docker template calls prod; never publish the standalone demo here.
-  manifest.scripts.prod = 'pnpm run build:qpalette --output-path=dist/qcatalogqsddui';
+  manifest.scripts.prod = 'pnpm run build:qpalette --output-path=dist/qsddui';
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
   // CI uses the corporate registry for all packages, like qedmsui.
   writeFileSync(
