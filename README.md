@@ -30,6 +30,8 @@ pnpm run format:check   # проверка форматирования
 
 ## Запуск в Docker
 
+Корпоративная Jenkins job использует отдельный `Jenkinsfile`, `dsMsaPipeline` и Docker-шаблон QPalette по аналогии с qedmsui. Подготовка контекста, окружения и условия первого запуска описаны в [docs/jenkins.md](docs/jenkins.md).
+
 Требуется работающий Docker с Linux-контейнерами и Docker Compose. Node.js на хосте устанавливать не нужно.
 
 ```sh

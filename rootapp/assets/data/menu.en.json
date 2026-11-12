@@ -1,0 +1,10 @@
+[
+  {
+    "caption": "Document catalog",
+    "service": "qcatalogqsddui",
+    "component": "qcatalogqsddui",
+    "route": "/documents/orders",
+    "icon": "pi-folder",
+    "default": true
+  }
+]

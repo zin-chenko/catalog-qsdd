@@ -1,0 +1,18 @@
+{
+  "auth": {
+    "service": "default",
+    "options": {
+      "logLevel": "disable",
+      "enableTokenRefresh": true,
+      "authDataServiceConfig": { "urls": { "base": "/api" } },
+      "excludeUrlsFromAuthorization": ["assets/*"]
+    }
+  },
+  "tabs": { "visible": true, "appName": "Каталог Q.EDMS" },
+  "sidebar": { "visible": true, "dynamicMenu": false },
+  "loginForm": { "visible": true },
+  "apiBaseUrl": "/api/$service",
+  "bundleLoader": { "bundleUrl": "/api/$service/$component/main.js" },
+  "singlePageMode": false,
+  "baseServiceName": ""
+}

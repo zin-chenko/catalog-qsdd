@@ -1,0 +1,34 @@
+# Corporate pbcui image contract, matching qedmsui.
+ARG PNPM_BASE=dh/pnpm
+ARG PNPM_VERSION=11.20-node22-alpine@sha256:f7abdd1f0c806b4e777ab9cb27bc863477e0434ab4c7c6a3bb057e36a9036000
+ARG TARGETOS_BASE=release/qpalette
+ARG TARGETOS_VERSION=26092940@sha256:413285f426e14aff0a69b9e561a3de3cb46ff3f9e6bddee49ffeb7cd52787f8b
+ARG REGISTRY=registry-new.diasoft.ru
+
+FROM --platform=${BUILDPLATFORM} ${REGISTRY}/${TARGETOS_BASE}:${TARGETOS_VERSION} AS final
+ARG UID=10001
+ARG GID=10001
+ARG PORT=8080
+ENV TZ=Europe/Moscow
+USER ${UID}:${GID}
+COPY --chown=${UID}:${GID} --chmod=500 --link rootapp /app/files
+EXPOSE ${PORT}/tcp
+
+FROM --platform=${BUILDPLATFORM} ${REGISTRY}/${PNPM_BASE}:${PNPM_VERSION} AS deps
+ARG NPM_REGISTRY=http://repolib-main.diasoft.ru:8081/repository/npm-public-and-diasoft/
+ENV PNPM_CONFIG_IGNORE_WORKSPACE=true
+ENV PNPM_CONFIG_REGISTRY=${NPM_REGISTRY}
+ENV PNPM_HOME=/pnpm
+WORKDIR /build
+COPY --link Q*UI/package.json Q*UI/pnpm-*.yaml Q*UI/.npmrc ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store,sharing=shared \
+    pnpm clean-install --frozen-lockfile --ignore-scripts
+
+FROM deps AS build
+COPY --link Q*UI .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store,sharing=shared \
+    pnpm run-script prod
+
+FROM final AS prod
+COPY --chown=${UID}:${GID} --chmod=500 --link --from=build /build/dist /app/files
+ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
