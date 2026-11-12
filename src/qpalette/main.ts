@@ -1,4 +1,3 @@
-import '@angular/compiler';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
